@@ -1,0 +1,52 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - copyloopvar
+    - depguard
+    - errorlint
+    - gocritic
+    - goconst
+    - misspell
+    - nilerr
+    - noctx
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wrapcheck
+  settings:
+    depguard:
+      rules:
+        no-pilot:
+          deny:
+            - pkg: github.com/qf-studio/pilot
+              desc: >-
+                pilot's packages live under internal/ and cannot be imported by an
+                external module. The dependency runs one way: the fork's shim
+                imports this module.
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+    wrapcheck:
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Join(
+        - .Wrap(
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - wrapcheck
+          - goconst
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
