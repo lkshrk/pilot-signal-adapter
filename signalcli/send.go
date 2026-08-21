@@ -150,10 +150,16 @@ type Sender struct {
 	account   string
 	http      *http.Client
 	maxMsgLen int
+	styled    bool
 }
 
 // SenderOption configures a [Sender].
 type SenderOption func(*Sender)
+
+// WithStyledText sends messages with text_mode "styled", so Signal renders
+// *italic*, **bold**, `monospace`, ~strikethrough~ and ||spoiler|| markers as
+// text styles instead of literal characters.
+func WithStyledText() SenderOption { return func(s *Sender) { s.styled = true } }
 
 // WithHTTPClient overrides the default client, which carries a 30s timeout.
 func WithHTTPClient(h *http.Client) SenderOption { return func(s *Sender) { s.http = h } }
@@ -210,12 +216,16 @@ func (s *Sender) SendText(ctx context.Context, recipient, text string) (int64, e
 	if text == "" {
 		return 0, errors.New("signalcli: message is empty")
 	}
-	var out sendResponse
-	err := s.do(ctx, http.MethodPost, "/v2/send", map[string]any{
+	payload := map[string]any{
 		"number":     s.account,
 		"recipients": []string{recipient},
 		"message":    text,
-	}, &out)
+	}
+	if s.styled {
+		payload["text_mode"] = "styled"
+	}
+	var out sendResponse
+	err := s.do(ctx, http.MethodPost, "/v2/send", payload, &out)
 	if err != nil {
 		return 0, err
 	}

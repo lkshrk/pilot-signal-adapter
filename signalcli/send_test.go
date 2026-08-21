@@ -508,3 +508,27 @@ func TestSenderDoesNotFollowRedirects(t *testing.T) {
 		t.Errorf("redirect target was contacted %d times", target)
 	}
 }
+
+func TestSendTextStyledMode(t *testing.T) {
+	t.Parallel()
+
+	srv, got := apiServer(t, http.StatusCreated, `{"timestamp":"1786852271208"}`)
+	if _, err := newSender(t, srv, signalcli.WithStyledText()).SendText(t.Context(), "group.abc", "**hi**"); err != nil {
+		t.Fatalf("SendText: %v", err)
+	}
+	if (*got)[0].body["text_mode"] != "styled" {
+		t.Errorf("text_mode missing from styled send: %+v", (*got)[0].body)
+	}
+}
+
+func TestSendTextPlainModeOmitsTextMode(t *testing.T) {
+	t.Parallel()
+
+	srv, got := apiServer(t, http.StatusCreated, `{"timestamp":"1786852271208"}`)
+	if _, err := newSender(t, srv).SendText(t.Context(), "group.abc", "hi"); err != nil {
+		t.Fatalf("SendText: %v", err)
+	}
+	if _, ok := (*got)[0].body["text_mode"]; ok {
+		t.Errorf("text_mode set on plain send: %+v", (*got)[0].body)
+	}
+}
